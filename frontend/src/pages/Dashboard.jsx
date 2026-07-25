@@ -4,7 +4,7 @@ import Card from '../components/Card';
 import SearchBar from '../components/SearchBar';
 import { LayoutDashboard, Plus, Send, Sparkles, FolderKanban } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const MOCK_PROJECTS = [
   {
