@@ -4,7 +4,7 @@ const AuthContext = createContext();
 
 const getApiUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL;
-  if (!envUrl) return 'http://localhost:5000/api';
+  if (!envUrl) return 'https://dev-sync-sift.onrender.com/api';
   return envUrl.endsWith('/api') ? envUrl : `${envUrl.replace(/\/$/, '')}/api`;
 };
 
