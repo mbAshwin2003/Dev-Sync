@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "install-all": "npm install && npm install --prefix backend && npm install --prefix frontend --legacy-peer-deps",
+    "postinstall": "npm install --prefix backend",
     "build": "npm install --prefix backend",
     "start": "node backend/server.js",
     "backend": "npm start --prefix backend",
