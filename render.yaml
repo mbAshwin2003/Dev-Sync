@@ -27,7 +27,8 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          name: devsync-backend
-          type: web
-          property: url
+        value: https://dev-sync-sift.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
