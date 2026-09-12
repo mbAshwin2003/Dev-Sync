@@ -7,6 +7,7 @@ const Profile = () => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Authentication Fields
   const [name, setName] = useState('');
@@ -35,6 +36,7 @@ const Profile = () => {
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
     try {
       if (isRegisterMode) {
         await register(name, email, password);
@@ -43,6 +45,8 @@ const Profile = () => {
       }
     } catch (err) {
       setError(err.message || 'Authentication failed');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -131,9 +135,11 @@ const Profile = () => {
               />
             </div>
 
-            <button type="submit" className="glow-btn" style={{ justifyContent: 'center', padding: '12px', marginTop: '10px' }}>
-              {isRegisterMode ? <UserPlus size={16} /> : <LogIn size={16} />}
-              {isRegisterMode ? 'Register' : 'Login'}
+            <button type="submit" className="glow-btn" disabled={submitting} style={{ justifyContent: 'center', padding: '12px', marginTop: '10px', opacity: submitting ? 0.7 : 1, cursor: submitting ? 'not-allowed' : 'pointer' }}>
+              {submitting ? (
+                <span style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+              ) : isRegisterMode ? <UserPlus size={16} /> : <LogIn size={16} />}
+              {submitting ? (isRegisterMode ? 'Creating Account...' : 'Signing In...') : isRegisterMode ? 'Register' : 'Login'}
             </button>
           </form>
 

@@ -275,3 +275,7 @@ input:focus, textarea:focus, select:focus {
     text-align: center;
   }
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

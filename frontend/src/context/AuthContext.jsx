@@ -10,7 +10,15 @@ const getApiUrl = () => {
 
 export const API_URL = getApiUrl();
 
-// Fallback mock developers and project data if backend is down
+// Timeout wrapper — avoids hanging forever on Render free-tier cold starts
+const fetchWithTimeout = (url, options = {}, timeoutMs = 8000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+};
+
+
 const MOCK_USER = {
   id: 'mock-dev-1',
   name: 'Alex Rivera',
@@ -34,7 +42,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       try {
-        const res = await fetch(`${API_URL}/auth/me`, {
+        const res = await fetchWithTimeout(`${API_URL}/auth/me`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -61,7 +69,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
+      const res = await fetchWithTimeout(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -97,7 +105,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
+      const res = await fetchWithTimeout(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
