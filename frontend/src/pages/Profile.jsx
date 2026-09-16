@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Github, Linkedin, Lock, Save, Edit, UserPlus, LogIn } from 'lucide-react';
 
 const Profile = () => {
+  const navigate = useNavigate();
   const { user, login, register, updateProfile } = useAuth();
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -43,6 +45,7 @@ const Profile = () => {
       } else {
         await login(email, password);
       }
+      navigate('/');
     } catch (err) {
       setError(err.message || 'Authentication failed');
     } finally {

@@ -31,40 +31,65 @@ const MOCK_USER = {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
 
+  // Initialize and verify authentication on initial mount ONLY
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!token) {
+    const initAuth = async () => {
+      const savedToken = localStorage.getItem('token');
+      if (!savedToken) {
         setLoading(false);
         return;
       }
+
+      // If using sandbox/mock session, preserve it without calling remote auth/me
+      if (savedToken.startsWith('mock-')) {
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          try {
+            setUser(JSON.parse(savedUser));
+          } catch {
+            setUser(MOCK_USER);
+          }
+        } else {
+          setUser(MOCK_USER);
+        }
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await fetchWithTimeout(`${API_URL}/auth/me`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${savedToken}`
           }
         });
         if (res.ok) {
           const data = await res.json();
           setUser(data.developer);
-        } else {
-          // Token expired or invalid
+          localStorage.setItem('user', JSON.stringify(data.developer));
+        } else if (res.status === 401) {
+          // Token is genuinely expired on backend
           logout();
         }
       } catch (err) {
-        console.warn('Backend API connection failed, running in sandbox/mock mode.');
-        // Fallback: If they had a token stored, mock log them in
-        setUser(MOCK_USER);
+        console.warn('Backend API connection failed, maintaining current session.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUser();
-  }, [token]);
+    initAuth();
+  }, []); // Run on mount only to prevent re-fetch loop
 
   const login = async (email, password) => {
     setLoading(true);
@@ -79,23 +104,32 @@ export const AuthProvider = ({ children }) => {
       if (res.ok) {
         const data = await res.json();
         localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.developer));
         setToken(data.token);
         setUser(data.developer);
         return { success: true };
       } else {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 400 || res.status === 401) {
+          throw new Error(errData.message || 'Invalid email or password');
+        }
         throw new Error(errData.message || 'Login failed');
       }
     } catch (err) {
-      console.warn('Backend API login failed. Logging in using mock data.');
-      // Mock login for offline demonstration
+      if (err.message === 'Invalid email or password') {
+        throw err;
+      }
+      console.warn('Backend API login failed or timed out. Falling back to local session.', err.message);
       const mockToken = 'mock-jwt-token-12345';
-      localStorage.setItem('token', mockToken);
-      setToken(mockToken);
-      setUser({
+      const mockUserData = {
         ...MOCK_USER,
+        name: email.split('@')[0],
         email: email || MOCK_USER.email
-      });
+      };
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUserData));
+      setToken(mockToken);
+      setUser(mockUserData);
       return { success: true, mock: true };
     } finally {
       setLoading(false);
@@ -115,23 +149,32 @@ export const AuthProvider = ({ children }) => {
       if (res.ok) {
         const data = await res.json();
         localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.developer));
         setToken(data.token);
         setUser(data.developer);
         return { success: true };
       } else {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 400) {
+          throw new Error(errData.message || 'User already exists');
+        }
         throw new Error(errData.message || 'Registration failed');
       }
     } catch (err) {
-      console.warn('Backend API registration failed. Registering using mock data.');
+      if (err.message === 'User already exists') {
+        throw err;
+      }
+      console.warn('Backend API registration failed or timed out. Falling back to local session.', err.message);
       const mockToken = 'mock-jwt-token-12345';
-      localStorage.setItem('token', mockToken);
-      setToken(mockToken);
-      setUser({
+      const mockUserData = {
         ...MOCK_USER,
-        name,
-        email
-      });
+        name: name || email.split('@')[0],
+        email: email || MOCK_USER.email
+      };
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUserData));
+      setToken(mockToken);
+      setUser(mockUserData);
       return { success: true, mock: true };
     } finally {
       setLoading(false);
@@ -152,21 +195,31 @@ export const AuthProvider = ({ children }) => {
         if (res.ok) {
           const data = await res.json();
           setUser(data);
+          localStorage.setItem('user', JSON.stringify(data));
           return { success: true };
         }
       }
       // Mock / fallback profile update
-      setUser(prev => ({ ...prev, ...profileData }));
+      setUser(prev => {
+        const updated = { ...prev, ...profileData };
+        localStorage.setItem('user', JSON.stringify(updated));
+        return updated;
+      });
       return { success: true };
     } catch (err) {
       console.error('Failed to update profile via API, updating locally.', err);
-      setUser(prev => ({ ...prev, ...profileData }));
+      setUser(prev => {
+        const updated = { ...prev, ...profileData };
+        localStorage.setItem('user', JSON.stringify(updated));
+        return updated;
+      });
       return { success: true };
     }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
   };
