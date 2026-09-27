@@ -13,7 +13,14 @@ const DeveloperSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: function() {
+      return !this.googleId;
+    }
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
   },
   bio: {
     type: String,
@@ -43,7 +50,7 @@ const DeveloperSchema = new mongoose.Schema({
 
 // Hash password before saving
 DeveloperSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
+  if (!this.password || !this.isModified('password')) {
     return next();
   }
   try {
@@ -57,6 +64,9 @@ DeveloperSchema.pre('save', async function(next) {
 
 // Compare password method
 DeveloperSchema.methods.comparePassword = async function(candidatePassword) {
+  if (!this.password) {
+    return false;
+  }
   return await bcryptjs.compare(candidatePassword, this.password);
 };
 

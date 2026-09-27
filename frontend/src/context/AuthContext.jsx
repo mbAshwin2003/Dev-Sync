@@ -217,6 +217,50 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (credential, demoPayload = null) => {
+    setLoading(true);
+    try {
+      const body = credential ? { credential } : { demo: demoPayload || { name: 'Alex Rivera (Google)', email: 'alex.google@devsync.io' } };
+      const res = await fetchWithTimeout(`${API_URL}/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.developer));
+        setToken(data.token);
+        setUser(data.developer);
+        return { success: true };
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Google authentication failed');
+      }
+    } catch (err) {
+      if (err.message && err.message.includes('Google token verification failed')) {
+        throw err;
+      }
+      console.warn('Backend Google auth failed or timed out. Falling back to local session.', err.message);
+      const mockToken = 'mock-google-token-12345';
+      const mockUserData = {
+        ...MOCK_USER,
+        name: demoPayload?.name || 'Alex Rivera (Google Demo)',
+        email: demoPayload?.email || 'alex.google@devsync.io',
+        avatar: demoPayload?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80'
+      };
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUserData));
+      setToken(mockToken);
+      setUser(mockUserData);
+      return { success: true, mock: true };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -225,7 +269,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, loginWithGoogle, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

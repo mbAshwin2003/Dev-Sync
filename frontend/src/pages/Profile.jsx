@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Github, Linkedin, Lock, Save, Edit, UserPlus, LogIn } from 'lucide-react';
+import { User, Mail, Github, Linkedin, Lock, Save, Edit, UserPlus, LogIn, CheckCircle } from 'lucide-react';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -100,6 +101,21 @@ const Profile = () => {
               {error}
             </div>
           )}
+
+          <div style={{ marginBottom: '20px' }}>
+            <GoogleAuthButton
+              onSuccess={() => navigate('/')}
+              onError={(err) => setError(err)}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0', gap: '12px' }}>
+            <div style={{ flex: 1, height: '1px', background: 'hsl(var(--card-border))' }} />
+            <span style={{ fontSize: '0.78rem', color: 'hsl(var(--muted))', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+              or continue with email
+            </span>
+            <div style={{ flex: 1, height: '1px', background: 'hsl(var(--card-border))' }} />
+          </div>
 
           <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {isRegisterMode && (
@@ -226,6 +242,24 @@ const Profile = () => {
                     <Mail size={14} />
                     {user.email}
                   </p>
+                  {user.googleId && (
+                    <div style={{ marginTop: '6px' }}>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '0.75rem',
+                        padding: '3px 9px',
+                        borderRadius: '12px',
+                        background: 'rgba(66, 133, 244, 0.12)',
+                        color: '#4285F4',
+                        border: '1px solid rgba(66, 133, 244, 0.25)',
+                        fontWeight: 600
+                      }}>
+                        <CheckCircle size={12} /> Google Account Connected
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               <button className="glow-btn" onClick={startEditing}>

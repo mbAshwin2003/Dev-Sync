@@ -65,7 +65,8 @@ export const updateProfile = async (req, res) => {
       skills: updatedDeveloper.skills,
       github: updatedDeveloper.github,
       linkedin: updatedDeveloper.linkedin,
-      avatar: updatedDeveloper.avatar
+      avatar: updatedDeveloper.avatar,
+      googleId: updatedDeveloper.googleId
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
