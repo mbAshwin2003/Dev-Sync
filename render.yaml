@@ -16,6 +16,8 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
 
   # Frontend Static Site
   - type: web
@@ -28,6 +30,8 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://dev-sync-sift.onrender.com/api
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
     routes:
       - type: rewrite
         source: /*
